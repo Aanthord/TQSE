@@ -1,282 +1,649 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Quantum Engine - FTC Fixed</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/recharts@2.8.0/umd/Recharts.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #581c87 50%, #0f172a 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, #60a5fa, #a78bfa, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .subtitle {
+            font-size: 1.125rem;
+            color: #d1d5db;
+        }
+        .panel {
+            background: rgba(31, 41, 55, 0.5);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #374151;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .button-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        .btn-primary {
+            background: #059669;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #047857;
+        }
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+        .btn-secondary {
+            background: #4b5563;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #374151;
+        }
+        .iteration-display {
+            font-size: 1.125rem;
+            font-family: monospace;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+        .form-input {
+            margin-top: 0.25rem;
+            padding: 0.5rem 0.75rem;
+            background: #374151;
+            border-radius: 0.25rem;
+            border: 1px solid #4b5563;
+            color: white;
+            font-size: 0.875rem;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #60a5fa;
+        }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .chart-panel {
+            background: rgba(31, 41, 55, 0.5);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            border: 1px solid #374151;
+        }
+        .chart-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .metric-card {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid;
+        }
+        .metric-card.blue {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+        .metric-card.red {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+        .metric-card.green {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+        .metric-card.purple {
+            background: rgba(139, 92, 246, 0.1);
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        .metric-value.blue { color: #60a5fa; }
+        .metric-value.red { color: #ef4444; }
+        .metric-value.green { color: #10b981; }
+        .metric-value.purple { color: #8b5cf6; }
+        .metric-label {
+            font-size: 0.875rem;
+            color: #d1d5db;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: #9ca3af;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
-/****************************
- * CompleteQuantumEngine — FTC FIX
- *
- * Core fixes:
- * 1) FTC now derives from RSF counts: D_k = F_i / G_i at depth i.
- * 2) Depth progression: at iteration t use i = min(t, rsfDepth).
- * 3) Optional, bounded quantum coupling blended convexly (no hard overwrites).
- * 4) Deterministic, no RNG inside FTC; smoothing via EMA only.
- ****************************/ 
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+        const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = Recharts;
 
-// ===== RSF bounded generator =====
-function generateRSFStructures(depth, complexity, constraints) {
-  if (depth <= 0 || depth > 5) return [{ generator: 0, shape: 'base', weight: 1.0, depth: 0 }];
-  if (complexity <= 0 || complexity > 4) complexity = 2;
-  if (constraints <= 0 || constraints > 4) constraints = 2;
+        // ===== RSF bounded generator =====
+        function generateRSFStructures(depth, complexity, constraints) {
+            if (depth <= 0 || depth > 5) return [{ generator: 0, shape: 'base', weight: 1.0, depth: 0 }];
+            if (complexity <= 0 || complexity > 4) complexity = 2;
+            if (constraints <= 0 || constraints > 4) constraints = 2;
+            const structures = [];
+            const maxStructures = Math.min(50, Math.pow(complexity, depth));
+            if (depth === 1) {
+                for (let g = 0; g < complexity && structures.length < maxStructures; g++) {
+                    structures.push({ generator: g, shape: 'primitive', weight: 1 + g * 0.1, depth: 1 });
+                }
+                return structures;
+            }
+            const prev = generateRSFStructures(depth - 1, complexity, constraints);
+            for (const p of prev) {
+                if (structures.length >= maxStructures) break;
+                for (let c = 0; c < constraints && structures.length < maxStructures; c++) {
+                    structures.push({ generator: p.generator, shape: `composite_${depth}_${c}`, weight: p.weight * 1.1, depth });
+                    if (depth <= 3) {
+                        structures.push({ generator: [p.generator, c], shape: `hybrid_${depth}`, weight: p.weight * 1.05, depth });
+                    }
+                }
+            }
+            return structures.slice(0, maxStructures);
+        }
 
-  const structures = [];
-  const maxStructures = Math.min(50, Math.pow(complexity, depth));
+        // stable uint32 hash
+        function hashStructure(s) {
+            const gens = Array.isArray(s.generator) ? s.generator : [s.generator ?? 0];
+            let h = 2166136261 >>> 0;
+            for (const g of gens) { h ^= (g | 0) >>> 0; h = Math.imul(h, 16777619) >>> 0; }
+            h ^= ((s.depth | 0) * 17) >>> 0;
+            const wInt = Math.floor((s.weight ?? 1) * 1024);
+            h ^= (wInt & 0xffffffff) >>> 0;
+            h = Math.imul(h, 2246822519) >>> 0; h ^= h >>> 15;
+            return h >>> 0;
+        }
 
-  if (depth === 1) {
-    for (let g = 0; g < complexity && structures.length < maxStructures; g++) {
-      structures.push({ generator: g, shape: 'primitive', weight: 1 + g * 0.1, depth: 1 });
-    }
-    return structures;
-  }
+        // smooth, monotone clamp in [0,1]
+        function delayedSaturation(x, gamma = 0.9) {
+            const clamped = Math.min(1, Math.max(0, x));
+            if (clamped === 0 || clamped === 1) return clamped;
+            const a = Math.pow(clamped, gamma);
+            const b = Math.pow(1 - clamped, gamma);
+            return a / (a + b);
+        }
 
-  const prev = generateRSFStructures(depth - 1, complexity, constraints);
-  for (const p of prev) {
-    if (structures.length >= maxStructures) break;
-    for (let c = 0; c < constraints && structures.length < maxStructures; c++) {
-      structures.push({ generator: p.generator, shape: `composite_${depth}_${c}`, weight: p.weight * 1.1, depth });
-      if (depth <= 3) {
-        structures.push({ generator: [p.generator, c], shape: `hybrid_${depth}`, weight: p.weight * 1.05, depth });
-      }
-    }
-  }
-  return structures.slice(0, maxStructures);
-}
+        // ===== Quantum bits (textbook Grover, deterministic) =====
+        function createGroverState(N, markedIndex) {
+            const a = 1 / Math.sqrt(N);
+            const amplitudes = Array.from({ length: N }, () => ({ real: a, imag: 0 }));
+            return { amplitudes, markedIndex, iteration: 0, fidelity: 1 };
+        }
 
-// stable uint32 hash
-function hashStructure(s) {
-  const gens = Array.isArray(s.generator) ? s.generator : [s.generator ?? 0];
-  let h = 2166136261 >>> 0;
-  for (const g of gens) { h ^= (g | 0) >>> 0; h = Math.imul(h, 16777619) >>> 0; }
-  h ^= ((s.depth | 0) * 17) >>> 0;
-  const wInt = Math.floor((s.weight ?? 1) * 1024);
-  h ^= (wInt & 0xffffffff) >>> 0;
-  h = Math.imul(h, 2246822519) >>> 0; h ^= h >>> 15;
-  return h >>> 0;
-}
+        function normalize(amplitudes) {
+            const n = Math.sqrt(amplitudes.reduce((s, z) => s + z.real * z.real + z.imag * z.imag, 0));
+            return n < 1e-15 ? amplitudes : amplitudes.map(z => ({ real: z.real / n, imag: z.imag / n }));
+        }
 
-// smooth, monotone clamp in [0,1]
-function delayedSaturation(x, gamma = 0.9) {
-  const clamped = Math.min(1, Math.max(0, x));
-  if (clamped === 0 || clamped === 1) return clamped;
-  const a = Math.pow(clamped, gamma);
-  const b = Math.pow(1 - clamped, gamma);
-  return a / (a + b);
-}
+        function applyOracle(amps, idx) { 
+            return amps.map((z,i) => i===idx ? { real: -z.real, imag: -z.imag } : z); 
+        }
 
-// ===== Quantum bits (textbook Grover, deterministic) =====
-function createGroverState(N, markedIndex) {
-  const a = 1 / Math.sqrt(N);
-  const amplitudes = Array.from({ length: N }, () => ({ real: a, imag: 0 }));
-  return { amplitudes, markedIndex, iteration: 0, fidelity: 1 };
-}
-function normalize(amplitudes) {
-  const n = Math.sqrt(amplitudes.reduce((s, z) => s + z.real * z.real + z.imag * z.imag, 0));
-  return n < 1e-15 ? amplitudes : amplitudes.map(z => ({ real: z.real / n, imag: z.imag / n }));
-}
-function applyOracle(amps, idx) { return amps.map((z,i) => i===idx ? { real: -z.real, imag: -z.imag } : z); }
-function applyDiffusion(amps) {
-  const N = amps.length; const ar = amps.reduce((s,z)=>s+z.real,0)/N; const ai = amps.reduce((s,z)=>s+z.imag,0)/N;
-  return amps.map(z => ({ real: 2*ar - z.real, imag: 2*ai - z.imag }));
-}
-function groverIteration(state) {
-  const optimal = Math.floor((Math.PI / 4) * Math.sqrt(state.amplitudes.length));
-  if (state.iteration >= optimal) {
-    const d = state.amplitudes.map(z => ({ real: z.real*0.95, imag: z.imag*0.95 }));
-    return { ...state, amplitudes: normalize(d), iteration: state.iteration + 1 };
-  }
-  const a1 = applyOracle(state.amplitudes, state.markedIndex);
-  const a2 = applyDiffusion(a1);
-  return { ...state, amplitudes: normalize(a2), iteration: state.iteration + 1 };
-}
-function decohere(state, rate) {
-  if (rate <= 0) return state;
-  const amps = state.amplitudes.map((z,i)=>{
-    const m = Math.hypot(z.real,z.imag); const ph = Math.atan2(z.imag,z.real);
-    const m2 = m * (1 - rate*0.4); const ph2 = ph + rate*(i*0.1);
-    return { real: m2*Math.cos(ph2), imag: m2*Math.sin(ph2) };
-  });
-  return { ...state, amplitudes: normalize(amps), fidelity: Math.max(state.fidelity*(1-rate*0.5),0.1) };
-}
-function entropy(amplitudes){
-  let H=0; for(const z of amplitudes){ const p=z.real*z.real+z.imag*z.imag; if(p>1e-15) H -= p*Math.log2(p);} return Math.max(0,H);
-}
+        function applyDiffusion(amps) {
+            const N = amps.length; 
+            const ar = amps.reduce((s,z)=>s+z.real,0)/N; 
+            const ai = amps.reduce((s,z)=>s+z.imag,0)/N;
+            return amps.map(z => ({ real: 2*ar - z.real, imag: 2*ai - z.imag }));
+        }
 
-export default function CompleteQuantumEngine() {
-  const [params, setParams] = useState({
-    N: 16,
-    markedIndex: 5,
-    maxIterations: 15,
-    decoherenceRate: 0.02,
-    rsfDepth: 4,
-    generatorComplexity: 2,
-    shapeConstraints: 3,
-    repairThreshold: 0.8,
-  });
-  const [isRunning, setIsRunning] = useState(false);
-  const [t, setT] = useState(0);
-  const [results, setResults] = useState([]);
+        function groverIteration(state) {
+            const optimal = Math.floor((Math.PI / 4) * Math.sqrt(state.amplitudes.length));
+            if (state.iteration >= optimal) {
+                const d = state.amplitudes.map(z => ({ real: z.real*0.95, imag: z.imag*0.95 }));
+                return { ...state, amplitudes: normalize(d), iteration: state.iteration + 1 };
+            }
+            const a1 = applyOracle(state.amplitudes, state.markedIndex);
+            const a2 = applyDiffusion(a1);
+            return { ...state, amplitudes: normalize(a2), iteration: state.iteration + 1 };
+        }
 
-  // === FTC structural estimator ===
-  const structuralD = (depth) => {
-    const structs = generateRSFStructures(depth, params.generatorComplexity, params.shapeConstraints);
-    const G = Math.max(1, structs.length);
-    let F = 0; for (const s of structs) { if ((hashStructure(s) % params.N) === params.markedIndex) F++; }
-    return F / G; // in [0,1]
-  };
+        function decohere(state, rate) {
+            if (rate <= 0) return state;
+            const amps = state.amplitudes.map((z,i)=>{
+                const m = Math.hypot(z.real,z.imag); 
+                const ph = Math.atan2(z.imag,z.real);
+                const m2 = m * (1 - rate*0.4); 
+                const ph2 = ph + rate*(i*0.1);
+                return { real: m2*Math.cos(ph2), imag: m2*Math.sin(ph2) };
+            });
+            return { ...state, amplitudes: normalize(amps), fidelity: Math.max(state.fidelity*(1-rate*0.5),0.1) };
+        }
 
-  // Convex blend of structural D with a gentle Grover coupling (bounded)
-  const ftcAt = (iter, groverProb) => {
-    const i = Math.max(1, Math.min(params.rsfDepth, iter));
-    const Ds = structuralD(i);
-    const coupling = delayedSaturation(Ds + 0.5 * groverProb, 0.9);
-    const w = 0.25; // 25% coupling, 75% pure structure
-    return (1 - w) * Ds + w * coupling;
-  };
+        function entropy(amplitudes){
+            let H=0; 
+            for(const z of amplitudes){ 
+                const p=z.real*z.real+z.imag*z.imag; 
+                if(p>1e-15) H -= p*Math.log2(p);
+            } 
+            return Math.max(0,H);
+        }
 
-  // Simulate full run deterministically
-  const run = () => {
-    let S = createGroverState(params.N, params.markedIndex);
-    const rows = [];
-    let emaFTC = null; // smoothing only for display, does not affect truth value
-    const alpha = 0.3;
-    for (let k = 1; k <= params.maxIterations; k++) {
-      S = groverIteration(S);
-      S = decohere(S, params.decoherenceRate);
-      const z = S.amplitudes[params.markedIndex];
-      const p = z.real*z.real + z.imag*z.imag;
-      const H = entropy(S.amplitudes);
-      let dFTC = ftcAt(k, p);
-      // display smoothing
-      emaFTC = emaFTC == null ? dFTC : (alpha*dFTC + (1-alpha)*emaFTC);
-      rows.push({
-        iteration: k,
-        groverProb: p,
-        ftcTruthDensity: emaFTC,
-        fidelity: S.fidelity,
-        vonNeumannEntropy: H,
-        merkleValid: S.fidelity >= params.repairThreshold ? 1 : 0,
-        needsRepair: S.fidelity < params.repairThreshold ? 1 : 0,
-      });
-    }
-    setResults(rows);
-  };
+        function CompleteQuantumEngine() {
+            const [params, setParams] = useState({
+                N: 16,
+                markedIndex: 5,
+                maxIterations: 15,
+                decoherenceRate: 0.02,
+                rsfDepth: 4,
+                generatorComplexity: 2,
+                shapeConstraints: 3,
+                repairThreshold: 0.8,
+            });
 
-  // Animation tick
-  useEffect(() => {
-    if (isRunning && t < params.maxIterations) {
-      const timer = setTimeout(()=> setT((x)=>x+1), 350); return ()=>clearTimeout(timer);
-    } else if (t >= params.maxIterations) { setIsRunning(false); }
-  }, [isRunning, t, params.maxIterations]);
+            const [isRunning, setIsRunning] = useState(false);
+            const [t, setT] = useState(0);
+            const [results, setResults] = useState([]);
 
-  // Recompute preview series for first t steps
-  const animatedResults = useMemo(() => {
-    if (!isRunning && results.length) return results;
-    let S = createGroverState(params.N, params.markedIndex);
-    const out = []; let emaFTC = null; const alpha = 0.3;
-    for (let k = 1; k <= t; k++) {
-      S = groverIteration(S); S = decohere(S, params.decoherenceRate);
-      const z = S.amplitudes[params.markedIndex]; const p = z.real*z.real + z.imag*z.imag; const H = entropy(S.amplitudes);
-      let dFTC = ftcAt(k, p); emaFTC = emaFTC == null ? dFTC : (alpha*dFTC + (1-alpha)*emaFTC);
-      out.push({ iteration: k, groverProb: p, ftcTruthDensity: emaFTC, fidelity: S.fidelity, vonNeumannEntropy: H, merkleValid: S.fidelity >= params.repairThreshold ? 1 : 0, needsRepair: S.fidelity < params.repairThreshold ? 1 : 0 });
-    }
-    return out;
-  }, [t, isRunning, results, params.N, params.markedIndex, params.decoherenceRate, params.rsfDepth, params.generatorComplexity, params.shapeConstraints, params.repairThreshold]);
+            // === FTC structural estimator ===
+            const structuralD = (depth) => {
+                const structs = generateRSFStructures(depth, params.generatorComplexity, params.shapeConstraints);
+                const G = Math.max(1, structs.length);
+                let F = 0; 
+                for (const s of structs) { 
+                    if ((hashStructure(s) % params.N) === params.markedIndex) F++; 
+                }
+                return F / G; // in [0,1]
+            };
 
-  const metrics = useMemo(() => {
-    if (animatedResults.length === 0) return {};
-    const maxGrover = Math.max(...animatedResults.map(r=>r.groverProb));
-    const maxFTC = Math.max(...animatedResults.map(r=>r.ftcTruthDensity));
-    const avgF = animatedResults.reduce((s,r)=>s+r.fidelity,0)/animatedResults.length;
-    return { maxGrover: maxGrover.toFixed(4), maxFTC: maxFTC.toFixed(4), avgFidelity: avgF.toFixed(4), totalRepairs: animatedResults.filter(r=>r.needsRepair===1).length };
-  }, [animatedResults]);
+            // Convex blend of structural D with a gentle Grover coupling (bounded)
+            const ftcAt = (iter, groverProb) => {
+                const i = Math.max(1, Math.min(params.rsfDepth, iter));
+                const Ds = structuralD(i);
+                const coupling = delayedSaturation(Ds + 0.5 * groverProb, 0.9);
+                const w = 0.25; // 25% coupling, 75% pure structure
+                return (1 - w) * Ds + w * coupling;
+            };
 
-  const reset = () => { setIsRunning(false); setT(0); setResults([]); };
-  const toggle = () => { if (!isRunning && t === 0) run(); setIsRunning(v=>!v); };
+            // Simulate full run deterministically
+            const run = () => {
+                let S = createGroverState(params.N, params.markedIndex);
+                const rows = [];
+                let emaFTC = null; // smoothing only for display, does not affect truth value
+                const alpha = 0.3;
+                for (let k = 1; k <= params.maxIterations; k++) {
+                    S = groverIteration(S);
+                    S = decohere(S, params.decoherenceRate);
+                    const z = S.amplitudes[params.markedIndex];
+                    const p = z.real*z.real + z.imag*z.imag;
+                    const H = entropy(S.amplitudes);
+                    let dFTC = ftcAt(k, p);
+                    // display smoothing
+                    emaFTC = emaFTC == null ? dFTC : (alpha*dFTC + (1-alpha)*emaFTC);
+                    rows.push({
+                        iteration: k,
+                        groverProb: p,
+                        ftcTruthDensity: emaFTC,
+                        fidelity: S.fidelity,
+                        vonNeumannEntropy: H,
+                        merkleValid: S.fidelity >= params.repairThreshold ? 1 : 0,
+                        needsRepair: S.fidelity < params.repairThreshold ? 1 : 0,
+                    });
+                }
+                setResults(rows);
+            };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-6">
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">Complete Quantum Engine — FTC Fixed</h1>
-          <p className="text-lg text-gray-300">FTC now computed as F_i/G_i with depth progression and gentle coupling.</p>
-        </div>
+            // Animation tick
+            useEffect(() => {
+                if (isRunning && t < params.maxIterations) {
+                    const timer = setTimeout(()=> setT((x)=>x+1), 350); 
+                    return ()=>clearTimeout(timer);
+                } else if (t >= params.maxIterations) { 
+                    setIsRunning(false); 
+                }
+            }, [isRunning, t, params.maxIterations]);
 
-        <div className="bg-gray-800/50 rounded-lg p-4 mb-6 border border-gray-700">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <button onClick={toggle} className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${isRunning ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}>{isRunning ? 'Pause' : (t===0 ? 'Start Engine' : 'Resume')}</button>
-              <button onClick={reset} className="flex items-center gap-2 px-4 py-3 bg-gray-600 hover:bg-gray-700 rounded-lg font-medium transition-colors">Reset</button>
-            </div>
-            <div className="text-lg font-mono">Iteration: {t} / {params.maxIterations}</div>
-          </div>
+            // Recompute preview series for first t steps
+            const animatedResults = useMemo(() => {
+                if (!isRunning && results.length) return results;
+                let S = createGroverState(params.N, params.markedIndex);
+                const out = []; 
+                let emaFTC = null; 
+                const alpha = 0.3;
+                for (let k = 1; k <= t; k++) {
+                    S = groverIteration(S); 
+                    S = decohere(S, params.decoherenceRate);
+                    const z = S.amplitudes[params.markedIndex]; 
+                    const p = z.real*z.real + z.imag*z.imag; 
+                    const H = entropy(S.amplitudes);
+                    let dFTC = ftcAt(k, p); 
+                    emaFTC = emaFTC == null ? dFTC : (alpha*dFTC + (1-alpha)*emaFTC);
+                    out.push({ 
+                        iteration: k, 
+                        groverProb: p, 
+                        ftcTruthDensity: emaFTC, 
+                        fidelity: S.fidelity, 
+                        vonNeumannEntropy: H, 
+                        merkleValid: S.fidelity >= params.repairThreshold ? 1 : 0, 
+                        needsRepair: S.fidelity < params.repairThreshold ? 1 : 0 
+                    });
+                }
+                return out;
+            }, [t, isRunning, results, params.N, params.markedIndex, params.decoherenceRate, params.rsfDepth, params.generatorComplexity, params.shapeConstraints, params.repairThreshold]);
 
-          <div className="mt-4 grid md:grid-cols-5 gap-3 text-sm">
-            <label className="flex flex-col">N
-              <input type="number" min={2} max={512} value={params.N} onChange={(e)=>{const v=Math.max(2,Math.min(512,parseInt(e.target.value||'16',10))); setParams(p=>({...p,N:v,markedIndex:Math.min(p.markedIndex,v-1)})); reset();}} className="mt-1 px-3 py-1 bg-gray-700 rounded border border-gray-600" />
-            </label>
-            <label className="flex flex-col">Marked
-              <input type="number" min={0} max={params.N-1} value={params.markedIndex} onChange={(e)=>{const v=Math.max(0,Math.min(params.N-1,parseInt(e.target.value||'0',10))); setParams(p=>({...p,markedIndex:v})); reset();}} className="mt-1 px-3 py-1 bg-gray-700 rounded border border-gray-600" />
-            </label>
-            <label className="flex flex-col">RSF Depth
-              <input type="number" min={1} max={5} value={params.rsfDepth} onChange={(e)=>{const v=Math.max(1,Math.min(5,parseInt(e.target.value||'1',10))); setParams(p=>({...p,rsfDepth:v})); reset();}} className="mt-1 px-3 py-1 bg-gray-700 rounded border border-gray-600" />
-            </label>
-            <label className="flex flex-col">Complexity
-              <input type="number" min={1} max={4} value={params.generatorComplexity} onChange={(e)=>{const v=Math.max(1,Math.min(4,parseInt(e.target.value||'2',10))); setParams(p=>({...p,generatorComplexity:v})); reset();}} className="mt-1 px-3 py-1 bg-gray-700 rounded border border-gray-600" />
-            </label>
-            <label className="flex flex-col">Constraints
-              <input type="number" min={1} max={4} value={params.shapeConstraints} onChange={(e)=>{const v=Math.max(1,Math.min(4,parseInt(e.target.value||'3',10))); setParams(p=>({...p,shapeConstraints:v})); reset();}} className="mt-1 px-3 py-1 bg-gray-700 rounded border border-gray-600" />
-            </label>
-          </div>
-        </div>
+            const metrics = useMemo(() => {
+                if (animatedResults.length === 0) return {};
+                const maxGrover = Math.max(...animatedResults.map(r=>r.groverProb));
+                const maxFTC = Math.max(...animatedResults.map(r=>r.ftcTruthDensity));
+                const avgF = animatedResults.reduce((s,r)=>s+r.fidelity,0)/animatedResults.length;
+                return { 
+                    maxGrover: maxGrover.toFixed(4), 
+                    maxFTC: maxFTC.toFixed(4), 
+                    avgFidelity: avgF.toFixed(4), 
+                    totalRepairs: animatedResults.filter(r=>r.needsRepair===1).length 
+                };
+            }, [animatedResults]);
 
-        {/* Charts */}
-        <div className="grid lg:grid-cols-2 gap-6 mb-6">
-          <div className="bg-gray-800/50 rounded-lg p-6 border border-gray-700">
-            <h3 className="text-lg font-semibold mb-4">FTC (F_i/G_i) vs Grover</h3>
-            <ResponsiveContainer width="100%" height={350}>
-              <LineChart data={animatedResults}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="iteration" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
-                <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151' }} labelStyle={{ color: '#E5E7EB' }} />
-                <Legend />
-                <Line type="monotone" dataKey="groverProb" stroke="#3B82F6" strokeWidth={3} name="Grover Probability" dot={{ r: 2 }} />
-                <Line type="monotone" dataKey="ftcTruthDensity" stroke="#EF4444" strokeWidth={3} name="FTC Truth‑Density (EMA)" dot={{ r: 2 }} />
-                <Line type="monotone" dataKey="fidelity" stroke="#10B981" strokeWidth={2} strokeDasharray="3 3" name="Quantum Fidelity" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+            const reset = () => { 
+                setIsRunning(false); 
+                setT(0); 
+                setResults([]); 
+            };
 
-          <div className="bg-gray-800/50 rounded-lg p-6 border border-gray-700">
-            <h3 className="text-lg font-semibold mb-4">System Integration</h3>
-            <ResponsiveContainer width="100%" height={350}>
-              <LineChart data={animatedResults}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="iteration" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
-                <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151' }} labelStyle={{ color: '#E5E7EB' }} />
-                <Legend />
-                <Line type="monotone" dataKey="vonNeumannEntropy" stroke="#EC4899" strokeWidth={2} name="von Neumann Entropy" />
-                <Line type="monotone" dataKey="merkleValid" stroke="#F59E0B" strokeWidth={3} name="Structural Integrity" />
-                <Line type="monotone" dataKey="needsRepair" stroke="#8B5CF6" strokeWidth={2} strokeDasharray="2 2" name="Repair Triggers" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+            const toggle = () => { 
+                if (!isRunning && t === 0) run(); 
+                setIsRunning(v=>!v); 
+            };
 
-        {/* Metrics */}
-        <div className="bg-gray-800/50 rounded-lg p-6 border border-gray-700">
-          <h3 className="text-lg font-semibold mb-4">📊 Performance Metrics</h3>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-blue-500/10 p-4 rounded border border-blue-500/30"><div className="text-2xl font-bold text-blue-400">{metrics.maxGrover || '0.0625'}</div><div className="text-sm text-gray-300">Max Grover</div></div>
-            <div className="bg-red-500/10 p-4 rounded border border-red-500/30"><div className="text-2xl font-bold text-red-400">{metrics.maxFTC || '0.0000'}</div><div className="text-sm text-gray-300">Max FTC</div></div>
-            <div className="bg-green-500/10 p-4 rounded border border-green-500/30"><div className="text-2xl font-bold text-green-400">{metrics.avgFidelity || '1.0000'}</div><div className="text-sm text-gray-300">Average Fidelity</div></div>
-            <div className="bg-purple-500/10 p-4 rounded border border-purple-500/30"><div className="text-2xl font-bold text-purple-400">{metrics.totalRepairs || '0'}</div><div className="text-sm text-gray-300">Repairs</div></div>
-          </div>
-        </div>
+            return (
+                <div className="container">
+                    <div className="header">
+                        <h1 className="title">Complete Quantum Engine — FTC Fixed</h1>
+                        <p className="subtitle">FTC now computed as F_i/G_i with depth progression and gentle coupling.</p>
+                    </div>
 
-        <div className="text-center mt-8 text-gray-400 text-sm">
-          <p>FTC derived from RSF counts (F/G) with depth progression and gentle coupling.</p>
-        </div>
-      </div>
-    </div>
-  );
-}
+                    <div className="panel">
+                        <div className="controls">
+                            <div className="button-group">
+                                <button 
+                                    onClick={toggle} 
+                                    className={`btn ${isRunning ? 'btn-danger' : 'btn-primary'}`}
+                                >
+                                    {isRunning ? 'Pause' : (t===0 ? 'Start Engine' : 'Resume')}
+                                </button>
+                                <button 
+                                    onClick={reset} 
+                                    className="btn btn-secondary"
+                                >
+                                    Reset
+                                </button>
+                            </div>
+                            <div className="iteration-display">
+                                Iteration: {t} / {params.maxIterations}
+                            </div>
+                        </div>
+
+                        <div className="form-grid">
+                            <div className="form-group">
+                                <label className="form-label">N</label>
+                                <input 
+                                    type="number" 
+                                    min={2} 
+                                    max={512} 
+                                    value={params.N} 
+                                    onChange={(e)=>{
+                                        const v=Math.max(2,Math.min(512,parseInt(e.target.value||'16',10))); 
+                                        setParams(p=>({...p,N:v,markedIndex:Math.min(p.markedIndex,v-1)})); 
+                                        reset();
+                                    }} 
+                                    className="form-input" 
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Marked</label>
+                                <input 
+                                    type="number" 
+                                    min={0} 
+                                    max={params.N-1} 
+                                    value={params.markedIndex} 
+                                    onChange={(e)=>{
+                                        const v=Math.max(0,Math.min(params.N-1,parseInt(e.target.value||'0',10))); 
+                                        setParams(p=>({...p,markedIndex:v})); 
+                                        reset();
+                                    }} 
+                                    className="form-input" 
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">RSF Depth</label>
+                                <input 
+                                    type="number" 
+                                    min={1} 
+                                    max={5} 
+                                    value={params.rsfDepth} 
+                                    onChange={(e)=>{
+                                        const v=Math.max(1,Math.min(5,parseInt(e.target.value||'1',10))); 
+                                        setParams(p=>({...p,rsfDepth:v})); 
+                                        reset();
+                                    }} 
+                                    className="form-input" 
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Complexity</label>
+                                <input 
+                                    type="number" 
+                                    min={1} 
+                                    max={4} 
+                                    value={params.generatorComplexity} 
+                                    onChange={(e)=>{
+                                        const v=Math.max(1,Math.min(4,parseInt(e.target.value||'2',10))); 
+                                        setParams(p=>({...p,generatorComplexity:v})); 
+                                        reset();
+                                    }} 
+                                    className="form-input" 
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Constraints</label>
+                                <input 
+                                    type="number" 
+                                    min={1} 
+                                    max={4} 
+                                    value={params.shapeConstraints} 
+                                    onChange={(e)=>{
+                                        const v=Math.max(1,Math.min(4,parseInt(e.target.value||'3',10))); 
+                                        setParams(p=>({...p,shapeConstraints:v})); 
+                                        reset();
+                                    }} 
+                                    className="form-input" 
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Charts */}
+                    <div className="charts-grid">
+                        <div className="chart-panel">
+                            <h3 className="chart-title">FTC (F_i/G_i) vs Grover</h3>
+                            <ResponsiveContainer width="100%" height={350}>
+                                <LineChart data={animatedResults}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                                    <XAxis dataKey="iteration" stroke="#9CA3AF" />
+                                    <YAxis stroke="#9CA3AF" />
+                                    <Tooltip 
+                                        contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151' }} 
+                                        labelStyle={{ color: '#E5E7EB' }} 
+                                    />
+                                    <Legend />
+                                    <Line 
+                                        type="monotone" 
+                                        dataKey="groverProb" 
+                                        stroke="#3B82F6" 
+                                        strokeWidth={3} 
+                                        name="Grover Probability" 
+                                        dot={{ r: 2 }} 
+                                    />
+                                    <Line 
+                                        type="monotone" 
+                                        dataKey="ftcTruthDensity" 
+                                        stroke="#EF4444" 
+                                        strokeWidth={3} 
+                                        name="FTC Truth‐Density (EMA)" 
+                                        dot={{ r: 2 }} 
+                                    />
+                                    <Line 
+                                        type="monotone" 
+                                        dataKey="fidelity" 
+                                        stroke="#10B981" 
+                                        strokeWidth={2} 
+                                        strokeDasharray="3 3" 
+                                        name="Quantum Fidelity" 
+                                    />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+
+                        <div className="chart-panel">
+                            <h3 className="chart-title">System Integration</h3>
+                            <ResponsiveContainer width="100%" height={350}>
+                                <LineChart data={animatedResults}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                                    <XAxis dataKey="iteration" stroke="#9CA3AF" />
+                                    <YAxis stroke="#9CA3AF" />
+                                    <Tooltip 
+                                        contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151' }} 
+                                        labelStyle={{ color: '#E5E7EB' }} 
+                                    />
+                                    <Legend />
+                                    <Line 
+                                        type="monotone" 
+                                        dataKey="vonNeumannEntropy" 
+                                        stroke="#EC4899" 
+                                        strokeWidth={2} 
+                                        name="von Neumann Entropy" 
+                                    />
+                                    <Line 
+                                        type="monotone" 
+                                        dataKey="merkleValid" 
+                                        stroke="#F59E0B" 
+                                        strokeWidth={3} 
+                                        name="Structural Integrity" 
+                                    />
+                                    <Line 
+                                        type="monotone" 
+                                        dataKey="needsRepair" 
+                                        stroke="#8B5CF6" 
+                                        strokeWidth={2} 
+                                        strokeDasharray="2 2" 
+                                        name="Repair Triggers" 
+                                    />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* Metrics */}
+                    <div className="panel">
+                        <h3 className="chart-title">Performance Metrics</h3>
+                        <div className="metrics-grid">
+                            <div className="metric-card blue">
+                                <div className="metric-value blue">{metrics.maxGrover || '0.0625'}</div>
+                                <div className="metric-label">Max Grover</div>
+                            </div>
+                            <div className="metric-card red">
+                                <div className="metric-value red">{metrics.maxFTC || '0.0000'}</div>
+                                <div className="metric-label">Max FTC</div>
+                            </div>
+                            <div className="metric-card green">
+                                <div className="metric-value green">{metrics.avgFidelity || '1.0000'}</div>
+                                <div className="metric-label">Average Fidelity</div>
+                            </div>
+                            <div className="metric-card purple">
+                                <div className="metric-value purple">{metrics.totalRepairs || '0'}</div>
+                                <div className="metric-label">Repairs</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="footer">
+                        <p>FTC derived from RSF counts (F/G) with depth progression and gentle coupling.</p>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<CompleteQuantumEngine />, document.getElementById('root'));
+    </script>
+</body>
+</html>
